@@ -577,7 +577,7 @@ int main(int argc, char *argv[])
         // If the user enters a row or column value lower than 10, an error message is displayed and the program exits. 
         if (row < 10 || column < 10)
         {
-            printf("You have entered a row or column value smaller than 10. The minimum value of row and column is 10\n");
+            printf("You have entered a row or column value smaller than 10. The minimum value of row and column is 10.\nIf this isn't the issue, double check that you have entered your input in the form:\nprogram_name playername M N\n");
             exit(1);
         }
 
@@ -621,10 +621,6 @@ int main(int argc, char *argv[])
         // Displaying the covered game and starting game
         printf("\n");
         display(table, row, column);
-
-        /*
-            Check code on uni servers
-        */
 
         // Assigning bombs based on the number of tiles in the game
         int bombs;
