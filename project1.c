@@ -186,7 +186,7 @@ int initialize(float (*a)[1000], int r, int c)
 
     // Contingency because sometimes negative count can have extreme low values like 27 so if lower than threshold of 36, we run a loop and put our values into the toNegative and it will raise the negative count
     if(negative_count<37){
-        for (int x=0;x<3;x++){
+        for (int x=0;x<9;x++){
             for (int i = 0; i < r; i++)
             {
                 for (int j = 0; j < c; j++)
@@ -415,6 +415,14 @@ void displayUncovered(float (*a)[1000], int row, int column)
     }
 }
 
+void clean_stdin(void)
+{
+    int c;
+    do{
+        c = getchar();
+    } while (c != '\n' && c != EOF);
+}
+
 float substring(char line[100]){
     /*
         A function that will extract the score we'll need for the displaying of top scores. It takes the line as input in the form of a string and loops through it to find the word of which precedes every score  and from there we keep taking the score till we run into i which is after every score.
@@ -489,6 +497,11 @@ void displayTopScores(char logScores[20]){
                 i+=1;
             }
 
+            // so the user isn't confused if they ask for 5 and see 2 we print this disclaimer
+            if(document_size<n){
+                printf("The number of scores you requested is larger than the number of scores available\n");
+            }
+
             // making sure the sorter runs the exact amount of times that would ensure the entire document is sorted and all values have been compared
             for(int i=0;i<document_size-1;i++){
                 for (int counter = 0; counter < document_size - 1; counter++)
@@ -525,7 +538,7 @@ void displayTopScores(char logScores[20]){
     }
 
     // Flushing the buffer because scanf leaves next line character which will interfere with game loop
-    fflush(stdin);
+    clean_stdin();
     
 }
 
@@ -593,6 +606,9 @@ int main(int argc, char *argv[])
         // Initialising the uncovered table and then initialising the covered game table
         negative_count = initialize(uncoveredTable, row, column);
 
+        // Calculating the percentage of negative tiles
+        float negative_percentage = 100*negative_count / (float)numberOfCells;
+
         coverTable(table, row, column);
 
         // Displaying the uncovered cable and negative count
@@ -600,7 +616,7 @@ int main(int argc, char *argv[])
         displayUncovered(uncoveredTable, row, column);
         printf("\n");
         printf("\n");
-        printf("Total negative numbers is %d/%d\n", negative_count, numberOfCells);
+        printf("Total negative numbers is %d/%d = %0.2f percent\n", negative_count, numberOfCells, negative_percentage);
 
         // Displaying the covered game and starting game
         printf("\n");
@@ -608,7 +624,6 @@ int main(int argc, char *argv[])
 
         /*
             Check code on uni servers
-            script file
         */
 
         // Assigning bombs based on the number of tiles in the game
