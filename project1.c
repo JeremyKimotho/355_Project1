@@ -447,11 +447,15 @@ float substring(char line[100]){
 }
 
 void displayTopScores(char logScores[20]){
+    /*
+        A function that takes the name of the log file as input. The user is then asked if they want to see top scores and if they do the user is asked how many they want to see. The program then opens the log file, gets all the lines and places them in an array, passes them to the subscript function that returns the scores as a float and then compares the scores of the lines to sort them in descending order. Then prints to the user how many documents they wanted to see.
+    */
 
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
 
+    // String array where lines will be placed
     char lines[100][100];
 
     FILE *loggedScores;
@@ -471,21 +475,29 @@ void displayTopScores(char logScores[20]){
             printf("How many top scores would you like to view? ");
             scanf("%d", &n);
 
+            //  If user asked to see the top scores we open the log file in read-only mode
             loggedScores = fopen(logScores, "r");
 
+            // we read the entire file
             int i=0;
             while ((read = getline(&line, &len, loggedScores)) != -1)
             {
+                // counting the document by line size
                 document_size+=1;
+                // copying the lines we read into our string array
                 strcpy(lines[i], line);
                 i+=1;
             }
 
+            // making sure the sorter runs the exact amount of times that would ensure the entire document is sorted and all values have been compared
             for(int i=0;i<document_size-1;i++){
                 for (int counter = 0; counter < document_size - 1; counter++)
                 {
+                    // taking the score in the first line
                     float first = substring(lines[counter]);
+                    // taking the score in the second line
                     float second = substring(lines[counter + 1]);
+                    // comparing the two lines and if the first has a  score lower than the second they're swapped
                     if (first < second)
                     {
                         char intermediate[100];
@@ -496,15 +508,18 @@ void displayTopScores(char logScores[20]){
                 }
             }
 
+            // Displaying to the user the n lines they asked to see 
             printf("\n");
             for(int i=0;i<n;i++){
                 printf("%s", lines[i]);
             }
 
+            // closing the file after use to clear memory
             fclose(loggedScores);
         }
     } while (strcmp(topScores, "y") == 0);
 
+    // If the file was empty or the user didn't ask for anything
     if(document_size==0){
         printf("There were no scores to display\n");
     }
@@ -592,7 +607,6 @@ int main(int argc, char *argv[])
         display(table, row, column);
 
         /*
-            Check commenting 
             Check code on uni servers
             script file
         */
