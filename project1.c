@@ -420,21 +420,21 @@ float substring(char line[100]){
         A function that will extract the score we'll need for the displaying of top scores. It takes the line as input in the form of a string and loops through it to find the word of which precedes every score  and from there we keep taking the score till we run into i which is after every score.
     */
 
-    // The length is how long of a string to expect as the absolute max for a score value. So with 20 we extract scores till roughly 10 quintillion
-    int length = 20;
+    // The length is how long of a string to expect as the absolute max for a score value. So setting it to the length of 9 we'll always have enough to find the entire score.
+    int length = 9;
     int start = 0;
 
-    // Where we store the scorein string form
+    // Where we store the score still in string form
     char extractedScore[10];
     for(int i=0;i<strlen(line);i++){
         // Searching for the word of
         if(line[i]=='o'&&line[i+1]=='f'){
             while(start<length){
-                // Searching for the start of word in which signals end of score 
+                // Searching for start of letter in
                 if(line[i+3+start]=='i'){
                     start+=8;
                 }else{
-                    // Assigning score character by character
+                    // Assigning the score to extractedScore line-by-line
                     extractedScore[start] = line[i + 3 + start];
                     start++;
                 }
@@ -442,7 +442,7 @@ float substring(char line[100]){
         }
     }
 
-    // returning score as a floating point value
+    // Returning the score as a floating point value
     return atof(extractedScore);
 }
 
