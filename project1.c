@@ -41,7 +41,7 @@ void insertBonusSpecials(float (*a)[1000],  int r, int c){
     /*
         Takes the board as input along with the row and column values then will generate 2 random integers with a maximum of the row and column values. Then assigns the specials from those randoms.
 
-        Lives instantly doubled (27.0)- Represented as #
+        Extra lives instantly (27.0)- Represented as #
 
         Score instantly doubled (28.0)- Represented as @
     */
@@ -186,19 +186,24 @@ int initialize(float (*a)[1000], int r, int c)
 
     // Contingency because sometimes negative count can have extreme low values like 27 so if lower than threshold of 36, we run a loop and put our values into the toNegative and it will raise the negative count
     if(negative_count<37){
-        for (int i = 0; i < r; i++)
-        {
-            for (int j = 0; j < c; j++)
+        for (int x=0;x<3;x++){
+            for (int i = 0; i < r; i++)
             {
-                // ensuring we're not making a special negative
-                if(a[i][j]<15){
-                    toNegative(a[i][j], negative_count, negative_max);
-                    // making sure we increment the max counter
-                    if(a[i][j]<0) negative_max++;
+                for (int j = 0; j < c; j++)
+                {
+                    // ensuring we're not making a special negative
+                    if (a[i][j] < 15)
+                    {
+                        toNegative(a[i][j], negative_count, negative_max);
+                        // making sure we increment the max counter
+                        if (a[i][j] < 0)
+                            negative_max++;
+                    }
                 }
             }
         }
     }
+
     // inserts my bonus specials
     insertBonusSpecials(a, r, c);
 
@@ -234,7 +239,7 @@ void logScore(char name[100], float score, double seconds, char logFile[20]){
     // Opening the file in append mode
     loggingFile = fopen(logFile, "a");
     // Writing the information we want into the file
-    fprintf(loggingFile, "%s had a score of    %0.02f in %0.1f seconds of play\n", name, score, seconds);
+    fprintf(loggingFile, "%s had a score of %0.02f in %0.1f seconds of play\n", name, score, seconds);
     // Closing the file to free  up memory
     fclose(loggingFile);
 }
@@ -271,7 +276,8 @@ int calculateScore(float (*a)[1000], char (*b)[1000], int r, int c, int bomb_x, 
         for(int j=column_start;j<column_end+1;j++){
             // Making sure we stay in range of our board size
             if(i>-1&&j>-1&&i<r&&j<c){
-                if (a[i][j] > 15)
+                // We make sure the tile is still covered and we're not double counting
+                if (a[i][j] > 15 && b[i][j]=='X')
                 {
                     if (a[i][j] == 26.00)
                     {
@@ -298,14 +304,16 @@ int calculateScore(float (*a)[1000], char (*b)[1000], int r, int c, int bomb_x, 
                 }
                 else
                 {
-                    if (a[i][j] < 0)
+                    // We make sure the tile is still covered and we're not double counting
+                    if (a[i][j] < 0 && b[i][j]=='X')
                     {
                         // If the uncovered tile was negative a negative sign is placed on the board where a X was
                         b[i][j] = '-';
                         // Adding the uncovered tile floating point value to the score for this roll
                         running_score += a[i][j];
                     }
-                    else
+                    // We make sure the tile is still covered and we're not double counting
+                    else if(a[i][j]>0 && b[i][j]=='X')
                     {
                         // If the uncovered tile was positive a positive sign is placed on the board where a X was
                         b[i][j] = '+';
@@ -317,17 +325,25 @@ int calculateScore(float (*a)[1000], char (*b)[1000], int r, int c, int bomb_x, 
         }
     }
 
-    // Checking if the double life bonus special was found
+    // Checking if the extra lives bonus special was found
     if(*specials==27.0){
-        printf("You have found the double life bonus special tile! Your lives will be doubled immediately! \n");
-        lives+=3;
+        printf("You have found the extra lives bonus special tile! Your lives will be doubled immediately! \n");
+        *lives+=3;
+        *specials=0;
     }
 
 
-    // Checking if the double score bonus special was found
-    if(*specials>=28.0){
+    // Checking if the double score bonus special was found and their running score was positive
+    if(*specials>=28.0&&running_score<0){
+        printf("You have found the score double bonus tile! Your score was negative so it has been made positive and doubled\n");
+        running_score*=-1;
+        running_score *= 2;
+        *specials = 0;
+    }
+    else if (*specials >= 28.0){
         printf("You have found the score double bonus tile! Your score for this roll has been doubled\n");
-        running_score*=2;
+        running_score *= 2;
+        *specials = 0;
     }
 
     // Printing to the user the score they uncovered
@@ -399,11 +415,44 @@ void displayUncovered(float (*a)[1000], int row, int column)
     }
 }
 
+float substring(char line[100]){
+    /*
+        A function that will extract the score we'll need for the displaying of top scores. It takes the line as input in the form of a string and loops through it to find the word of which precedes every score  and from there we keep taking the score till we run into i which is after every score.
+    */
+
+    // The length is how long of a string to expect as the absolute max for a score value. So with 20 we extract scores till roughly 10 quintillion
+    int length = 20;
+    int start = 0;
+
+    // Where we store the scorein string form
+    char extractedScore[10];
+    for(int i=0;i<strlen(line);i++){
+        // Searching for the word of
+        if(line[i]=='o'&&line[i+1]=='f'){
+            while(start<length){
+                // Searching for the start of word in which signals end of score 
+                if(line[i+3+start]=='i'){
+                    start+=8;
+                }else{
+                    // Assigning score character by character
+                    extractedScore[start] = line[i + 3 + start];
+                    start++;
+                }
+            }
+        }
+    }
+
+    // returning score as a floating point value
+    return atof(extractedScore);
+}
+
 void displayTopScores(char logScores[20]){
 
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
+
+    char lines[100][100];
 
     FILE *loggedScores;
 
@@ -424,10 +473,32 @@ void displayTopScores(char logScores[20]){
 
             loggedScores = fopen(logScores, "r");
 
+            int i=0;
             while ((read = getline(&line, &len, loggedScores)) != -1)
             {
-                printf("%s", line);
                 document_size+=1;
+                strcpy(lines[i], line);
+                i+=1;
+            }
+
+            for(int i=0;i<document_size-1;i++){
+                for (int counter = 0; counter < document_size - 1; counter++)
+                {
+                    float first = substring(lines[counter]);
+                    float second = substring(lines[counter + 1]);
+                    if (first < second)
+                    {
+                        char intermediate[100];
+                        strcpy(intermediate, lines[counter]);
+                        strcpy(lines[counter], lines[counter + 1]);
+                        strcpy(lines[counter + 1], intermediate);
+                    }
+                }
+            }
+
+            printf("\n");
+            for(int i=0;i<n;i++){
+                printf("%s", lines[i]);
             }
 
             fclose(loggedScores);
@@ -521,8 +592,9 @@ int main(int argc, char *argv[])
         display(table, row, column);
 
         /*
-            Create sort in display top scores
+            Check commenting 
             Check code on uni servers
+            script file
         */
 
         // Assigning bombs based on the number of tiles in the game
@@ -593,6 +665,15 @@ int main(int argc, char *argv[])
                             score = 0;
                         }
 
+                        // If the score is below zero the player loses a life  and score becomes 0
+                        if (score <= 0)
+                        {
+                            printf("\n");
+                            printf("Your score has dipped below zero and therefore you've lost a life\n");
+                            lives--;
+                            score = 0;
+                        }
+
                         // Displaying the board to the user as well as the number of lives, the score, and the bomb
                         display(table, row, column);
                         printf("Lives: %d\n", lives);
@@ -603,15 +684,6 @@ int main(int argc, char *argv[])
                         if (exit_tile == 1)
                         {
                             exitGame(&beginning, player_name, score, loggingFile);
-                        }
-
-                        // If the score is below zero the player loses a life  and score becomes 0
-                        if (score <= 0)
-                        {
-                            printf("\n");
-                            printf("Your score has dipped below zero and therefore you've lost a life\n");
-                            lives--;
-                            score = 0;
                         }
                     }else{
                         printf("There was an error in your input\n");
@@ -630,6 +702,7 @@ int main(int argc, char *argv[])
             }
         } while (lives > 0 && bombs > 0);
 
+        // If bombs end or lives end the game ends
         exitGame(&beginning, player_name, score, loggingFile);
     }
     else
